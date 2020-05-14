@@ -1,4 +1,8 @@
 {
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "axios": "^0.19.2",
     "dateformat": "^3.0.3",
@@ -7,5 +11,8 @@
     "puppeteer": "^3.0.4",
     "qrcode-terminal": "^0.12.0",
     "wechaty": "^0.38.4"
+  },
+  "engines": {
+    "node": "10.x"
   }
 }

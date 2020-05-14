@@ -1,9 +1,7 @@
 const { Wechaty, Friendship } = require('wechaty');
 const dateFormat = require('dateformat');
-const schedule = require('./schedule');
+const schedule = require('node-schedule');
 const { getNotifyMsg } = require('./notify');
-
-const SENDDATE = '20 30 * * * *';
 
 // 延时函数，防止检测出类似机器人行为操作
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,8 +53,10 @@ async function onMessage(msg) {
 
 // 创建微信每日说定时任务
 async function initDay() {
-  console.log(`已经设定每日说任务`);
-  schedule.setSchedule(SENDDATE, async () => {
+  console.log('设定定时任务');
+  const rule = new schedule.RecurrenceRule();
+  rule.minute = new schedule.Range(0, 59, 20);
+  schedule.scheduleJob(rule, async () => {
     try {
       const room = await bot.Room.find({ topic: '天秤基金' });
       const taskStartMsg = `${dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss')}, 任务开始执行:`;
@@ -71,6 +71,7 @@ async function initDay() {
       console.error(e.message);
     }
   });
+  console.log('设定定时任务成功');
 }
 
 const bot = new Wechaty({ name: 'MintosNotifier' });
