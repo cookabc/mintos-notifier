@@ -1,87 +1,39 @@
-const { Wechaty, Friendship } = require('wechaty');
+const axios = require('axios');
 const dateFormat = require('dateformat');
 const schedule = require('node-schedule');
 const { getNotifyMsg } = require('./notify');
 
-// 延时函数，防止检测出类似机器人行为操作
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-//  二维码生成
-function onScan(qrcode, status) {
-  // 在console端显示二维码
-  require('qrcode-terminal').generate(qrcode);
-  const qrcodeImageUrl = ['https://api.qrserver.com/v1/create-qr-code/?data=', encodeURIComponent(qrcode)].join('');
-  console.log(qrcodeImageUrl);
+async function postSlackMsg(msg) {
+  await axios({
+    method: 'post',
+    url: 'https://hooks.slack.com/services/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',
+    data: { text: msg },
+    headers: { 'content-type': 'application/json' },
+  });
 }
 
-// 登录
-async function onLogin(user) {
-  console.log(`${user}登录了`);
-  // 登陆后创建定时任务
-  await initDay();
-}
-
-// 登出
-function onLogout(user) {
-  console.log(`${user} 已经登出`);
-}
-
-// 监听对话
-async function onMessage(msg) {
-  // 发消息人
-  const contact = msg.from();
-  // 消息内容
-  const content = msg.text().trim();
-  // 是否是群消息
-  const room = msg.room();
-  // 发消息人备注
-  const alias = await contact.alias();
-  // 消息是否是文字
-  const isText = msg.type() === bot.Message.Type.Text;
-  if (msg.self()) {
-    return;
-  }
-  if (room && isText) {
-    // 如果是群消息 目前只处理文字消息
-    const topic = await room.topic();
-    console.log(`群名: ${topic}; 发消息人: ${contact.name()}; 内容: ${content}`);
-  } else if (isText) {
-    // 如果非群消息 目前只处理文字消息
-    console.log(`发消息人: ${alias}; 消息内容: ${content}`);
+async function runTaskLoop() {
+  const taskStartMsg = `${dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss')}, 执行任务`;
+  console.log(taskStartMsg);
+  const logMsgList = (await getNotifyMsg()) || [];
+  if (logMsgList.length === 0) {
+    console.log('No available loans');
+    await postSlackMsg('No available loans');
+  } else {
+    logMsgList.forEach(async (msg) => {
+      console.log(msg);
+      await postSlackMsg(msg);
+    });
   }
 }
 
-// 创建微信每日说定时任务
-async function initDay() {
+async function initTask() {
   console.log('设定定时任务');
   const rule = new schedule.RecurrenceRule();
-  rule.minute = new schedule.Range(0, 59, 20);
-  schedule.scheduleJob(rule, async () => {
-    try {
-      const room = await bot.Room.find({ topic: '天秤基金' });
-      const taskStartMsg = `${dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss')}, 任务开始执行:`;
-      console.log(taskStartMsg);
-      await room.say(taskStartMsg);
-      const logMsgList = (await getNotifyMsg()) || [];
-      logMsgList.forEach(async (msg) => {
-        await delay(2000);
-        await room.say(msg);
-      });
-    } catch (e) {
-      console.error(e.message);
-    }
-  });
-  console.log('设定定时任务成功');
+  rule.minute = new schedule.Range(0, 59, 10);
+  schedule.scheduleJob(rule, runTaskLoop);
+  console.log('定时任务设定成功');
+  await runTaskLoop();
 }
 
-const bot = new Wechaty({ name: 'MintosNotifier' });
-
-bot.on('scan', onScan);
-bot.on('login', onLogin);
-bot.on('logout', onLogout);
-bot.on('message', onMessage);
-
-bot
-  .start()
-  .then(() => console.log('开始登陆微信'))
-  .catch((e) => console.error(e));
+initTask();
