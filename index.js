@@ -1,12 +1,12 @@
 const axios = require('axios');
 const dateFormat = require('dateformat');
 const schedule = require('node-schedule');
-const { getNotifyMsg } = require('./notify');
+const { getMsgList } = require('./notify');
 
 async function postSlackMsg(msg) {
   await axios({
     method: 'post',
-    url: 'https://hooks.slack.com/services/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',
+    url: 'https://hooks.slack.com/services/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',
     data: { text: msg },
     headers: { 'content-type': 'application/json' },
   });
@@ -15,15 +15,17 @@ async function postSlackMsg(msg) {
 async function runTaskLoop() {
   const taskStartMsg = `${dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss')}, 执行任务`;
   console.log(taskStartMsg);
-  const logMsgList = (await getNotifyMsg()) || [];
-  if (logMsgList.length === 0) {
+  const msgList = (await getMsgList()) || [];
+  if (msgList.length === 0) {
     console.log('No available loans');
     await postSlackMsg('No available loans');
   } else {
-    logMsgList.forEach(async (msg) => {
-      console.log(msg);
-      await postSlackMsg(msg);
+    concatMsg = '';
+    msgList.forEach(async (msg) => {
+      concatMsg = concatMsg + msg + '\n\n';
     });
+    console.log(concatMsg);
+    await postSlackMsg(concatMsg);
   }
 }
 
