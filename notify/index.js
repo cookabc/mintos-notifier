@@ -116,7 +116,7 @@ const getMsgList = async () => {
   let finalMsgList = [];
   for (let i = 0; i < 5; i++) {
     const msgList = await getNotifyMsg(i);
-    finalMsgList = [...finalMsgList, ...msgList];
+    finalMsgList = [...msgList, ...finalMsgList];
     if (i < 4) await wait(3000);
   }
   return finalMsgList;

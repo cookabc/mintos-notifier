@@ -6,7 +6,7 @@ const { getMsgList } = require('./notify');
 async function postSlackMsg(msg) {
   await axios({
     method: 'post',
-    url: 'https://hooks.slack.com/services/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',
+    url: 'https://hooks.slack.com/services/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',
     data: { text: msg },
     headers: { 'content-type': 'application/json' },
   });
